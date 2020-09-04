@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/CVS": true,
+			"**/node_modules": true,
+			"**/.DS_Store": true
+		}
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "npm run",
+				"type": "shell",
+				"command": "npm start",
+				"problemMatcher": []
+			}
+		]
+	}
+}

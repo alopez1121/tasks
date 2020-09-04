@@ -1,0 +1,13 @@
+body {
+  box-sizing: border-box;
+  font-family: 'Roboto','Segoe UI', sans-serif;
+  font-weight: 400;
+}
+
+main {
+  border: 1px solid #e0e0e0;
+}
+
+tr {
+  border: 1px solid blue;
+}

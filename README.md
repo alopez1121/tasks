@@ -1,3 +1,6 @@
+# Tasks
+A CRA app that I use to learn-by-doing.
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

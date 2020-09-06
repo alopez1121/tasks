@@ -1,7 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react'
 import { InputField } from './Forms'
 import { IDBReactContext } from './Contexts'
-import { Task } from "./Interfaces"
+import { Task, NextStatusType, PreviousStatusType } from "./Interfaces"
+import { useTaskStatus } from './Hooks'
 
 /**
  * TaskForm
@@ -43,6 +44,7 @@ export function TaskForm({ objectStore }: any): JSX.Element {
  * @param props : any other optional props
   */
 function TaskListItem({ id, status, content, ...props }: any): JSX.Element {
+  const [taskStatus, next, prev] = useTaskStatus(status)
   function onDeleteButtonClick(event: any) {
     if (props.onDelete) {
       props.onDelete({ id, status, content })
@@ -51,7 +53,21 @@ function TaskListItem({ id, status, content, ...props }: any): JSX.Element {
   }
   return (
     <li key={~~(Math.random() * 1E9)} className="task">
-      <span className="status"><button onClick={() => props.onPreviousStatus("PREV")}>&laquo;</button>{status}<button onClick={() => props.onNextStatus("NEXT")}>&raquo;</button></span>
+      <span className="status">
+        <button onClick={() => {
+          if (props.onUpdateTask) {
+            props.onUpdateTask({ id, status: PreviousStatusType(taskStatus), content })
+            prev()
+          }
+        }}>&laquo;</button>
+        {taskStatus}
+      <button onClick={() => {
+        if (props.onUpdateTask) {
+          props.onUpdateTask({ id, status: NextStatusType(taskStatus), content })
+          next()
+        }
+      }}>&raquo;</button>
+      </span>
       <span className="content">{content}</span>
       <button onClick={onDeleteButtonClick}>delete</button>
     </li>
@@ -77,30 +93,26 @@ export function TaskList({ objectStore }: any): JSX.Element {
       </>
     )
   }
-  
-  function setStatus(i: number, status: string) {
-    if (i < tasks.length) {
-      let newTasks = [...tasks]
-      newTasks[i].status = status
-      setTasks(newTasks)
-    }
-  }
-  // otherwise if there are tasks, then render them using the TaskListItem component.
-  const taskListItems = tasks.map((e, i) => {
+
+  function renderTaskListItem(task: Task, index: number): JSX.Element {
+
     return (<TaskListItem
-      key={`task-${e.id ?? ~~(Math.random() * 1000)}`}
-      onPreviousStatus={(status: string) => setStatus(i, status)}
-      onNextStatus={(status: string) => setStatus(i, status)}
+      key={`task-${task.id ?? ~~(Math.random() * 1000)}`}
+      onUpdateTask={(task: Task) => {
+        db.updateRecord(objectStore, task)
+      }}
       onDelete={(deleteThisTask: Task) => {
-        db.removeRecord("tasks", deleteThisTask.id ?? deleteThisTask.content, () => {
+        db.removeRecord(objectStore, deleteThisTask.id ?? deleteThisTask.content, () => {
           let newTasks = [...tasks]
-          newTasks.splice(i, 1)
+          newTasks.splice(index, 1)
           console.log(newTasks)
           setTasks(newTasks)
         })
       }}
-      {...e} />)
-  })
+      {...task} />)
+  }
+  // otherwise if there are tasks, then render them using the TaskListItem component.
+  const taskListItems = tasks.map((e, i) => renderTaskListItem(e, i))
 
   return (
     <>

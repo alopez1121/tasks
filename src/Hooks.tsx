@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react'
 import * as IDB from './IDB'
+import {StatusType, StatusTypeValues} from './Interfaces'
 
 /**
  * useIndexedDB
@@ -26,4 +27,30 @@ export function useIndexedDB(name: string, version: number, schemas: Array<IDB.O
     }
   }, [db, name, version, schemas])
   return [db, loadState]
+}
+
+export const useTaskStatus = (initial: StatusType): [StatusType, ()=>void, () =>void] => {
+  const [value, setValue] = useState<StatusType>(initial)
+  const [index, setIndex] = useState<number>(StatusTypeValues.indexOf(initial))
+  const next = () => {
+    let nextIndex = index
+    if (StatusTypeValues.length > (1+nextIndex)) {
+      nextIndex += 1
+    } else {
+      nextIndex = 0
+    } 
+    setValue(StatusTypeValues[nextIndex])
+    setIndex(nextIndex)
+  }
+  const previous = () => {
+    let previousIndex = index
+    if (previousIndex === 0) {
+      previousIndex = StatusTypeValues.length - 1
+    } else {
+      previousIndex -= 1
+    } 
+    setValue(StatusTypeValues[previousIndex])
+    setIndex(previousIndex)
+  }
+  return [value, next, previous]
 }

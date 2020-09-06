@@ -21,8 +21,11 @@ const IndexedDB = ({name, version, objectStoreSchemas, ...props}: any): JSX.Elem
         .then(() => setIDBChanged(idbChange + 1)
         )
     }
-    const updateRecord = (objectStore: string, record: any) => {
-      setIDBChanged(idbChange + 1)
+    const updateRecord = (objectStore: string, record: any, callback?: () => void) => {
+      callback = callback ?? function(){console.log("record updated: ", record)}
+      IDB.putRecord(db, objectStore, record)
+        .then(callback)
+        .then(() => setIDBChanged(idbChange + 1))
     }
     const getAllRecords = (objectStore: string, callback: (results: Array<any>)=> void) => {
       IDB.getAllRecords(db, objectStore).then(callback)

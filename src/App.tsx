@@ -1,30 +1,23 @@
 import React from 'react'
-import * as IDB from './IDB'
 import {TaskForm, TaskList} from './Tasks'
-import {DatabaseContext} from './Contexts'
-import {useIndexedDB} from './Hooks'
+import IndexedDB from './IndexedDB'
 
 const App = (): JSX.Element => {
-  const [db, loadState] = useIndexedDB("taskDB", 1, [{
-    objectStore: "tasks",
-    params: { keyPath: "id", autoIncrement: true },
-    indices: [
-      { index: "status", unique: false },
-      { index: "content", unique: true },
-    ]
-  }])
-  console.log("<render:App>")
-  if (db) {
+    const TasksObjectStoreSchemas = [{
+      objectStore: "tasks",
+      params: { keyPath: "id", autoIncrement: true },
+      indices: [
+        { index: "status", unique: false },
+        { index: "content", unique: true },
+      ]
+    }]
+    console.log("<render:App>")
     return (
-      <DatabaseContext.Provider value={db}>
-        <p>IndexedDB: "{db && db.name}"</p>
-        <TaskForm onSubmit={(task: any) => IDB.addRecord(db, "tasks", task)} />
-        <TaskList objectStore="tasks"></TaskList>
-      </DatabaseContext.Provider>
+    <IndexedDB name="taskDB" version={1} objectStoreSchemas={TasksObjectStoreSchemas}>
+      <TaskForm />
+      <TaskList objectStore="tasks"></TaskList>
+    </IndexedDB>
     )
-  } else {
-    return <p>{loadState}</p>
-  }
 }
 
 export default App

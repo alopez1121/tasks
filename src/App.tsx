@@ -14,8 +14,8 @@ const App = (): JSX.Element => {
     console.log("<render:App>")
     return (
     <IndexedDB name="taskDB" version={1} objectStoreSchemas={TasksObjectStoreSchemas}>
-      <TaskForm />
-      <TaskList objectStore="tasks"></TaskList>
+      <TaskForm objectStore="tasks"/>
+      <TaskList objectStore="tasks"/>
     </IndexedDB>
     )
 }

@@ -3,7 +3,12 @@ import { InputField } from './Forms'
 import { IDBReactContext } from './Contexts'
 import { Task } from "./Interfaces"
 
-export function TaskForm({ onSubmit, notify, ...props }: any): JSX.Element {
+/**
+ * TaskForm
+ * uses IDBReactContext to submit task data to the objectStore
+ * @param objectStore: the name of the object store that should receive task data.
+ */
+export function TaskForm({ objectStore }: any): JSX.Element {
   const db = useContext(IDBReactContext)
   const [task, setTask] = useState({ status: "", content: "" })
   return (<form>
@@ -20,7 +25,7 @@ export function TaskForm({ onSubmit, notify, ...props }: any): JSX.Element {
       onChange={(e: any) => setTask({ ...task, content: e.target.value })} />
 
     <button type="submit" onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-      db.addRecord("tasks", task, () => {
+      db.addRecord(objectStore, task, () => {
         setTask({ status: "", content: "" })
       })
       event.preventDefault()
@@ -28,23 +33,32 @@ export function TaskForm({ onSubmit, notify, ...props }: any): JSX.Element {
   </form>)
 }
 
-function TaskListItem({ id, status, content, ...rest }: any): JSX.Element {
+// TODO: create a rand(N) function that returns that ~~(Math.random() * N)
+/**
+ * TaskListItem
+ * @description This meant to be used as a direct child of the TaskList component. It will render one task in a task list.
+ * @param id : task.id
+ * @param status : task.status
+ * @param content : task.content
+ * @param props : any other optional props
+  */
+function TaskListItem({ id, status, content, ...props }: any): JSX.Element {
   function onDeleteButtonClick(event: any) {
-    if (rest.onDelete) {
-      rest.onDelete({ id, status, content })
+    if (props.onDelete) {
+      props.onDelete({ id, status, content })
     }
     event.preventDefault()
   }
   return (
     <li key={~~(Math.random() * 1E9)} className="task">
-      <span className="status"><button onClick={() => rest.onPreviousStatus("PREV")}>&laquo;</button>{status}<button onClick={() => rest.onNextStatus("NEXT")}>&raquo;</button></span>
+      <span className="status"><button onClick={() => props.onPreviousStatus("PREV")}>&laquo;</button>{status}<button onClick={() => props.onNextStatus("NEXT")}>&raquo;</button></span>
       <span className="content">{content}</span>
       <button onClick={onDeleteButtonClick}>delete</button>
     </li>
   )
 }
 
-export function TaskList({ objectStore, ...props }: any): JSX.Element {
+export function TaskList({ objectStore }: any): JSX.Element {
   const db = useContext(IDBReactContext)
   const [tasks, setTasks] = useState<any[]>([])
   useEffect(() => {
@@ -52,7 +66,9 @@ export function TaskList({ objectStore, ...props }: any): JSX.Element {
       db.getAllRecords(objectStore, (all: Array<any>) => setTasks(all))
     }
   }, [db, objectStore, tasks.length])
+  console.log("<render:TaskList>")
 
+  // if there are no tasks simply display 'No Tasks'
   if (tasks.length === 0) {
     return (
       <>
@@ -61,7 +77,7 @@ export function TaskList({ objectStore, ...props }: any): JSX.Element {
       </>
     )
   }
-  console.log("<render:TaskList>")
+  
   function setStatus(i: number, status: string) {
     if (i < tasks.length) {
       let newTasks = [...tasks]
@@ -69,25 +85,28 @@ export function TaskList({ objectStore, ...props }: any): JSX.Element {
       setTasks(newTasks)
     }
   }
+  // otherwise if there are tasks, then render them using the TaskListItem component.
+  const taskListItems = tasks.map((e, i) => {
+    return (<TaskListItem
+      key={`task-${e.id ?? ~~(Math.random() * 1000)}`}
+      onPreviousStatus={(status: string) => setStatus(i, status)}
+      onNextStatus={(status: string) => setStatus(i, status)}
+      onDelete={(deleteThisTask: Task) => {
+        db.removeRecord("tasks", deleteThisTask.id ?? deleteThisTask.content, () => {
+          let newTasks = [...tasks]
+          newTasks.splice(i, 1)
+          console.log(newTasks)
+          setTasks(newTasks)
+        })
+      }}
+      {...e} />)
+  })
+
   return (
     <>
       <h4>ObjectStore: {objectStore}</h4>
       <ul className="taskList">
-        {tasks.map((e, i) => {
-          return (<TaskListItem
-            key={`task-${e.id ?? ~~(Math.random() * 1000)}`}
-            onPreviousStatus={(status: string) => setStatus(i, status)}
-            onNextStatus={(status: string) => setStatus(i, status)}
-            onDelete={(deleteThisTask: Task) => {
-              db.removeRecord("tasks", deleteThisTask.id ?? deleteThisTask.content, () => {
-                let newTasks = [...tasks]
-                newTasks.splice(i, 1)
-                console.log(newTasks)
-                setTasks(newTasks)
-              })
-            }}
-            {...e} />)
-        })}
+        {taskListItems}
       </ul>
     </>
   )
